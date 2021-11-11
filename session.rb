@@ -12,7 +12,7 @@ class Session
    @subfolder_id = subfolder_id
    @logfiles = Dir.glob("#{path}/*").reduce([]) do |logs, path|
      # Only add files, not directories
-     (Pathname.new(path).file?) ? logs.push(Logfile.new(path)) : logs
+     (Pathname.new(path).file?) ? logs.push(Logfile.new(path, self)) : logs
    end
   end
 
