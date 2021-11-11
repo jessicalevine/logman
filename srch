@@ -39,7 +39,7 @@ ids = Ndex.subfolder_ids
 puts "Searching #{Ndex.subfolder_prefix} #{ids.min} through #{ids.max} for \"#{pattern}\""
 
 if command == "list"
-  puts Srch.send(selection, pattern).reduce("") { |s, l| "#{s}\n#{l}" }
+  puts Srch.send(selection, pattern).reduce("") { |s, l| "#{s}\n#{l.pp}" }
 else
   results = Srch.send(selection, pattern)
   puts "Executing commands:"
