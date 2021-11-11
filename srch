@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+require_relative "ndex"
+
+module Srch
+  class << self
+    extend NdexPlugin
+
+    def all(term)
+      all_by_id(term).values.flatten
+    end
+
+    def latest(term)
+      all_by_id(term)[all_by_id.keys.max]
+    end
+
+    def last(term)
+      abi = all_by_id(term)
+      [abi[abi.keys.max].last]
+    end
+
+    private 
+
+    def all_by_id(term)
+      paths_by_id = Hash.new { |hash, key| hash[key] = [] }
+      Ndex.subfolder_ids.each do |id|
+        subfolder_path = "#{Ndex.subfolder_path(id)}/"
+        candidates = Dir.glob("#{subfolder_path}*")
+        candidates.select! { |cand| cand.downcase.include?(term.downcase) }
+
+        candidates.each do |cand_path|
+          if File.directory?(cand_path)
+            filepath = Dir.glob("#{cand_path}/*").find { |p| File.exists?(p) }
+            paths_by_id[id] << filepath if filepath
+          else
+            paths_by_id[id] << cand_path
+          end
+        end
+      end
+      paths_by_id
+    end
+  end
+end
+
+term = ARGV[0]
+command = ARGV[1] || "list"
+selection = ARGV[2] || "all"
+
+ids = Ndex.subfolder_ids
+puts "Searching #{Ndex.subfolder} #{ids.min} through #{ids.max} for \"#{term}\""
+if command == "list"
+  puts Srch.send(selection, term)
+else
+  results = Srch.send(selection, term)
+  puts "Executing commands:"
+  results.each { |filepath| puts "  #{command} \"#{filepath}\"" }
+  results.each do |filepath|
+    ret = `#{command} \"#{filepath}\"`
+    puts ret if ret && ret != ""
+  end
+end

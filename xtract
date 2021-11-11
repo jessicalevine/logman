@@ -1,0 +1,87 @@
+#!/usr/bin/env ruby
+require_relative "ndex"
+
+module Xtract
+  class << self
+    extend NdexPlugin
+
+    attr_accessor :zipfile
+    attr_accessor :source_dir
+    ndexable :default_zipfile
+    ndexable :default_source_dir
+
+    def new_subfolder_path
+      "#{Ndex.subfolder_path}#{Ndex.subfolder_ids.max + 1}"
+    end
+
+    def make_new_subfolder!
+      path = new_subfolder_path
+      puts "Making new subfolder #{path}"
+      path.tap do |path|
+        Dir.mkdir(path)
+      end
+    end
+
+    def extract!
+      path = make_new_subfolder!
+      puts "Unzipping #{zipfile} into #{path}"
+
+      `unzip #{zipfile} -d #{path}`
+
+      puts "New directory contents:"
+      Dir.glob("#{path}/*").each do |name|
+        puts "  #{name}"
+      end
+    end
+
+    def move_matches!(pattern)
+      path = make_new_subfolder!
+      puts "Moving files into #{path}"
+
+      `mv #{Xtract.source_dir}/#{pattern} #{path}`
+      puts "New directory contents:"
+      Dir.glob("#{path}/*").each do |name|
+        puts "  #{name}"
+      end
+    end
+  end
+end
+
+
+if ARGV[0]
+  cmd = ARGV[0]
+
+
+  if cmd == "zip"
+    Xtract.zipfile = ARGV[1]
+
+    if File.exists?(Xtract.zipfile)
+      puts 
+      Xtract.extract!
+    else
+      puts "You entered \"#{Xtract.zipfile}\" as your zipfile for extraction"
+      puts "This file does not exist, please provide a valid zipfile"
+      exit
+    end
+  elsif cmd == "match"
+    pattern = ARGV[1]
+
+    Xtract.source_dir = ARGV[2] ? ARGV[2] : Xtract.default_source_dir
+
+    puts 
+    Xtract.move_matches!(pattern)
+  end
+elsif Xtract.default_zipfile
+  Xtract.zipfile = Xtract.default_zipfile
+
+  if File.exists?(Xtract.zipfile)
+    Xtract.extract!
+  else
+    puts "You tried to use the default zipfile \"#{Xtract.zipfile}\""
+    puts "This file does not exist, please provide a valid zipfile"
+    exit
+  end
+else
+  puts "You did not enter a zipfile, and no default was found -- exiting"
+  exit
+end
