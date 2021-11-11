@@ -29,19 +29,15 @@ module Ndex
       config["rootfolder"]
     end
 
-    def subfolder
-      config["subfolder"]
-    end
-
-    def subfolder_path(id="")
-      "#{rootfolder}/#{subfolder}#{id}"
+    def subfolder_prefix
+      "#{rootfolder}/#{config["subfolder"]}"
     end
 
     def subfolder_ids
-      Dir.glob("#{subfolder_path}*").select do |filename|
-        filename.include?(subfolder_path)
+      Dir.glob("#{subfolder_prefix}*").select do |filename|
+        filename.include?(subfolder_prefix)
       end.map do |filename|
-        filename.gsub(subfolder_path, "").to_i
+        filename.gsub(subfolder_prefix, "").to_i
       end
     end
   end
