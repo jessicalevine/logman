@@ -1,6 +1,6 @@
-require 'bundler'
+require "bundler"
 Bundler.require
-require 'colorize'
+require "colorize"
 
 class Logfile
   attr_accessor :path
