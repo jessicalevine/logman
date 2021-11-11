@@ -11,7 +11,7 @@ module Srch
     end
 
     def latest(pattern)
-      find_logfiles(pattern).last
+      [find_logfiles(pattern).last]
     end
 
     def sessions
