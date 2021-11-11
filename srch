@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
+
 require_relative "ndex"
 require_relative "session"
+require "colorize"
 
 module Srch
   class << self
@@ -13,12 +15,26 @@ module Srch
     def latest(pattern)
       [find_logfiles(pattern).last]
     end
+    
+    def text(pattern)
+      matches = {}
+
+      sessions.each do |session|
+        session.logfiles.each do |logfile|
+          lines = logfile.find_lines(pattern)
+          matches[logfile] = lines unless lines.empty?
+        end
+      end
+
+      matches
+    end
 
     def sessions
       return @sessions if @sessions
       @sessions = []
       Ndex.subfolder_ids.sort.map do |id|
         @sessions << Session.new(id)
+        logfile = @sessions.last.logfiles.last
       end
       @sessions
     end
@@ -40,6 +56,25 @@ puts "Searching #{Ndex.subfolder_prefix} #{ids.min} through #{ids.max} for \"#{p
 
 if command == "list"
   puts Srch.send(selection, pattern).reduce("") { |s, l| "#{s}\n#{l.pp}" }
+elsif command == "text"
+  width = `tput cols`.to_i
+
+  matches = Srch.text(pattern).each_pair do |logfile, lines| 
+    puts logfile.pp.ljust(width).black.on_white
+
+    odd_line = true
+    lines.each do |line|
+      print_str = "#{line}\n\n"
+
+      if odd_line
+        puts print_str
+      else
+        puts print_str.on_black
+      end
+
+      odd_line = !odd_line
+    end
+  end
 else
   results = Srch.send(selection, pattern)
   puts "Executing commands:"

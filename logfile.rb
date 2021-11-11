@@ -1,6 +1,9 @@
 require "bundler"
 Bundler.require
 require "colorize"
+require "nokogiri"
+
+require_relative "ndex"
 
 class Logfile
   attr_accessor :path
@@ -9,6 +12,22 @@ class Logfile
   def initialize(path, parent_session=nil)
     @path = path
     @parent_session = parent_session
+  end
+
+  def html
+    @html = @html ||  File.open(path) { |f| Nokogiri::HTML(f) } 
+  end
+
+  def find_lines(pattern)
+    html.css(Ndex.message_selector).reduce([]) do |matches, line|
+      content = line.content
+      matches_content = content.downcase.include?(pattern.downcase) 
+      if matches_content and not Ndex.search_exclusions.any? { |e| content.include?(e) }
+        matches << content
+      else
+        matches
+      end
+    end
   end
 
   def pp

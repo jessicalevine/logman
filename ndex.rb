@@ -33,6 +33,16 @@ module Ndex
       "#{rootfolder}/#{config["subfolder"]}"
     end
 
+    # Nokogiri xpath string for selecting the contents of messages within logs
+    def message_selector
+      config["search_strings"]["message_selector"]
+    end
+
+    # Array of strings to use to exclude bot/system messages when text searching logs
+    def search_exclusions
+      config["search_strings"]["exclusions"]
+    end
+
     def subfolder_ids
       Dir.glob("#{subfolder_prefix}*").select do |filename|
         filename.include?(subfolder_prefix)
