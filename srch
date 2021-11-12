@@ -19,10 +19,21 @@ module Srch
     def text(pattern)
       matches = {}
 
+      # Make this faster by relying upon the_silver_searcher (much faster)
+      # to determine candidate files with possible matches, and skipping HTML
+      # parsing if the file isn't contained in ag results
+      filter = {}
+      `ag -l "#{pattern}"`.split("\n").each do |path|
+        filter[path.downcase] = true
+      end
+
       sessions.each do |session|
         session.logfiles.each do |logfile|
-          lines = logfile.find_lines(pattern)
-          matches[logfile] = lines unless lines.empty?
+          if filter[logfile.path.downcase]
+            lines = logfile.find_lines(pattern)
+            matches[logfile] = lines unless lines.empty?
+          else
+          end
         end
       end
 
