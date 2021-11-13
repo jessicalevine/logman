@@ -7,9 +7,9 @@ Used for logfile movements, automatically placing them in new, consecutively num
 
 ```
 Commands:
-  xtract help [COMMAND]              # Describe available commands or one specific command
-  xtract match PATTERN [SOURCE_DIR]  # moves files matching PATTERN at SOURCE_DIR to new subfolder
-  xtract zip PATH                    # unzip a zipfile of logs into a new subfolder
+  xtract help [COMMAND]                # Describe available commands or one specific command
+  xtract match [PATTERN] [SOURCE_DIR]  # moves files matching PATTERN at SOURCE_DIR to new subfolder
+  xtract zip PATH                      # unzip a zipfile of logs into a new subfolder
 ```
 
 ## srch

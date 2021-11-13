@@ -13,6 +13,7 @@ module Xtract
     attr_reader :zipfile
     attr_reader :source_dir
     ndexable :default_source_dir
+    ndexable :default_match_pattern
 
     def zipfile=(dir)
       @zipfile = Pathname.new(dir).expand_path
@@ -82,8 +83,9 @@ class XtractCLI < Thor
     end
   end
 
-  desc "match PATTERN [SOURCE_DIR]", "moves files matching PATTERN at SOURCE_DIR to new subfolder"
-  def match(pattern, path=nil)
+  desc "match [PATTERN] [SOURCE_DIR]", "moves files matching PATTERN at SOURCE_DIR to new subfolder"
+  def match(pattern=nil, path=nil)
+    pattern = pattern || Xtract.default_match_pattern
     Xtract.source_dir = path || Xtract.default_source_dir
 
     puts "Subfolder that would be created: #{Xtract.new_subfolder_path}\n\n"
