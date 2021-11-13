@@ -10,7 +10,8 @@ module Srch
   class << self
     extend NdexPlugin
     
-    def text(pattern)
+    def text(pattern, recent)
+      recent = recent || Ndex.max_id
       matches = {}
 
       # Make this faster by relying upon the_silver_searcher (much faster)
@@ -22,11 +23,13 @@ module Srch
       end
 
       Ndex.sessions.each do |session|
-        session.logfiles.each do |logfile|
-          if filter[logfile.path.downcase]
-            lines = logfile.find_lines(pattern)
-            matches[logfile] = lines unless lines.empty?
-          else
+        if session.subfolder_id > Ndex.max_id - recent
+          session.logfiles.each do |logfile|
+            if filter[logfile.path.downcase]
+              lines = logfile.find_lines(pattern)
+              matches[logfile] = lines unless lines.empty?
+            else
+            end
           end
         end
       end
@@ -34,9 +37,12 @@ module Srch
       matches
     end
 
-    def print_matching_logfiles(pattern)
+    def print_matching_logfiles(pattern, recent)
+      recent = recent || Ndex.max_id
       Ndex.sessions.each do |session|
-        session.matching_logfiles(pattern).each { |lf| puts lf.pp }
+        if session.subfolder_id > Ndex.max_id - recent
+          session.matching_logfiles(pattern).each { |lf| puts lf.pp }
+        end
       end
     end
 
@@ -48,7 +54,9 @@ module Srch
   end
 end
 
-def print_header(action, desc, min=Ndex.sessions.min.subfolder_id, max=Ndex.sessions.max.subfolder_id)
+def print_header(action, desc, min=nil, max=nil)
+  min = min || Ndex.min_id
+  max = max || Ndex.max_id
   puts ">>>>> #{action} #{Ndex.subfolder_prefix} #{min} through #{max} #{desc}".cyan.on_black
 end
 
@@ -86,10 +94,16 @@ class SrchCLI < Thor
   end 
 
   desc "fulltext PATTERN", "full text search for logfile lines matching PATTERN"
+  option :recent, :type => :numeric, :aliases => :r
   def fulltext(pattern)
-    print_header("Full-text searching", "for \"#{pattern}\"")
+    recent = options[:recent] || Ndex.max_id
+    print_header(
+      "Full-text searching",
+      "for \"#{pattern}\"",
+      options[:recent] ? Ndex.max_id - recent : nil
+    )
 
-    matches = Srch.text(pattern).each_pair do |logfile, lines| 
+    matches = Srch.text(pattern, recent).each_pair do |logfile, lines| 
       puts logfile.pp.ljust(width).black.on_white
 
       odd_line = true
@@ -110,9 +124,16 @@ class SrchCLI < Thor
   map "ftext" => :fulltext
 
   desc "name PATTERN", "list logfiles whose name matches PATTERN"
+  option :recent, :type => :numeric, :aliases => :r
   def name(pattern)
-    print_header("Searching", "for filename \"#{pattern}\"")
-    Srch.print_matching_logfiles(pattern)
+    recent = options[:recent] || Ndex.max_id
+    print_header(
+      "Searching",
+      "for filename \"#{pattern}\"",
+      options[:recent] ? Ndex.max_id - recent : nil
+    )
+
+    Srch.print_matching_logfiles(pattern, recent)
   end
   map "find" => :name
 end

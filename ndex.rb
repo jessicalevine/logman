@@ -48,6 +48,14 @@ module Ndex
       path.gsub(subfolder_prefix, "").to_i
     end
 
+    def max_id
+      sessions.max.subfolder_id
+    end
+
+    def min_id
+      sessions.min.subfolder_id
+    end
+
     def sessions
       @sessions = @sessions || Dir.glob("#{subfolder_prefix}*").reduce([]) do |ss, path|
         ss << Session.new(path)
