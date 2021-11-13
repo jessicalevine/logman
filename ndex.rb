@@ -1,3 +1,4 @@
+require_relative "session"
 require "yaml"
 
 NDEX_CONF = ".ndexconf.yml"
@@ -43,12 +44,14 @@ module Ndex
       config["search_strings"]["exclusions"]
     end
 
-    def subfolder_ids
-      Dir.glob("#{subfolder_prefix}*").select do |filename|
-        filename.include?(subfolder_prefix)
-      end.map do |filename|
-        filename.gsub(subfolder_prefix, "").to_i
-      end
+    def subfolder_id_from_path(path)
+      path.gsub(subfolder_prefix, "").to_i
+    end
+
+    def sessions
+      @sessions = @sessions || Dir.glob("#{subfolder_prefix}*").reduce([]) do |ss, path|
+        ss << Session.new(path)
+      end.sort
     end
   end
 end

@@ -1,7 +1,4 @@
-require "bundler"
-Bundler.require
 require "colorize"
-require "nokogiri"
 
 require_relative "ndex"
 
@@ -15,6 +12,7 @@ class Logfile
   end
 
   def html
+    require "nokogiri"
     @html = @html ||  File.open(path) { |f| Nokogiri::HTML(f) } 
   end
 

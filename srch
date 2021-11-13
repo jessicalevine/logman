@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
+require "bundler"
+Bundler.setup
 
 require_relative "ndex"
-require_relative "session"
 require "colorize"
 
 module Srch
@@ -27,7 +28,7 @@ module Srch
         filter[path.downcase] = true
       end
 
-      sessions.each do |session|
+      Ndex.sessions.each do |session|
         session.logfiles.each do |logfile|
           if filter[logfile.path.downcase]
             lines = logfile.find_lines(pattern)
@@ -40,18 +41,8 @@ module Srch
       matches
     end
 
-    def sessions
-      return @sessions if @sessions
-      @sessions = []
-      Ndex.subfolder_ids.sort.map do |id|
-        @sessions << Session.new(id)
-        logfile = @sessions.last.logfiles.last
-      end
-      @sessions
-    end
-
     def find_logfiles(pattern)
-      sessions.reduce([]) do |matches, session|
+      Ndex.sessions.reduce([]) do |matches, session|
         matches.concat(session.matching_logfiles(pattern))
       end
     end
@@ -62,8 +53,9 @@ pattern = ARGV[0]
 command = ARGV[1] || "list"
 selection = ARGV[2] || "all"
 
-ids = Ndex.subfolder_ids
-puts "Searching #{Ndex.subfolder_prefix} #{ids.min} through #{ids.max} for \"#{pattern}\""
+min = Ndex.sessions.min.subfolder_id
+max = Ndex.sessions.max.subfolder_id
+puts "Searching #{Ndex.subfolder_prefix} #{min} through #{max} for \"#{pattern}\""
 
 if command == "list"
   puts Srch.send(selection, pattern).reduce("") { |s, l| "#{s}\n#{l.pp}" }

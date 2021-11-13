@@ -4,20 +4,21 @@ require "pathname"
 
 class Session
   include Comparable
-  attr_accessor :subfolder_id
-  attr_accessor :logfiles
+  attr_reader :path
 
-
-  def initialize(subfolder_id)
-   @subfolder_id = subfolder_id
-   @logfiles = Dir.glob("#{path}/*").reduce([]) do |logs, path|
-     # Only add files, not directories
-     (Pathname.new(path).file?) ? logs.push(Logfile.new(path, self)) : logs
-   end
+  def initialize(path)
+   @path = path
   end
 
-  def path
-    "#{Ndex.subfolder_prefix}#{subfolder_id}"
+  def subfolder_id
+    @subfolder_id = @subfolder_id || Ndex.subfolder_id_from_path(path)
+  end
+
+  def logfiles
+    @logfiles = @logfiles || Dir.glob("#{path}/*").reduce([]) do |logs, path|
+      # Only add files, not directories
+      (Pathname.new(path).file?) ? logs.push(Logfile.new(path, self)) : logs
+    end
   end
 
   def matching_logfiles(pattern)
