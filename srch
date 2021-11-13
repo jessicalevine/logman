@@ -55,11 +55,12 @@ selection = ARGV[2] || "all"
 
 min = Ndex.sessions.min.subfolder_id
 max = Ndex.sessions.max.subfolder_id
-puts "Searching #{Ndex.subfolder_prefix} #{min} through #{max} for \"#{pattern}\""
 
 if command == "list"
+  puts ">>>>> Searching #{Ndex.subfolder_prefix} #{min} through #{max} for filename \"#{pattern}\"".cyan.on_black
   puts Srch.send(selection, pattern).reduce("") { |s, l| "#{s}\n#{l.pp}" }
 elsif command == "text"
+  puts ">>>>> Full-text searching #{Ndex.subfolder_prefix} #{min} through #{max} for \"#{pattern}\"".cyan.on_black
   width = `tput cols`.to_i
 
   matches = Srch.text(pattern).each_pair do |logfile, lines| 
