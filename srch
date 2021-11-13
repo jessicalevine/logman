@@ -9,10 +9,6 @@ require "thor"
 module Srch
   class << self
     extend NdexPlugin
-
-    def all(pattern)
-      print_matching_logfiles(pattern)
-    end
     
     def text(pattern)
       matches = {}
@@ -43,45 +39,82 @@ module Srch
         session.matching_logfiles(pattern).each { |lf| puts lf.pp }
       end
     end
-  end
-end
 
-pattern = ARGV[0]
-command = ARGV[1] || "list"
-selection = ARGV[2] || "all"
-
-min = Ndex.sessions.min.subfolder_id
-max = Ndex.sessions.max.subfolder_id
-
-if command == "list"
-  puts ">>>>> Searching #{Ndex.subfolder_prefix} #{min} through #{max} for filename \"#{pattern}\"".cyan.on_black
-  Srch.send(selection, pattern)
-elsif command == "text"
-  puts ">>>>> Full-text searching #{Ndex.subfolder_prefix} #{min} through #{max} for \"#{pattern}\"".cyan.on_black
-  width = `tput cols`.to_i
-
-  matches = Srch.text(pattern).each_pair do |logfile, lines| 
-    puts logfile.pp.ljust(width).black.on_white
-
-    odd_line = true
-    lines.each do |line|
-      print_str = "#{line}\n\n"
-
-      if odd_line
-        puts print_str
-      else
-        puts print_str.on_black
+    def find_matching_logfiles(pattern)
+      Ndex.sessions.reduce([]) do |matches, session|
+        matches.concat(session.matching_logfiles(pattern))
       end
-
-      odd_line = !odd_line
     end
   end
-else
-  results = Srch.send(selection, pattern)
-  puts "Executing commands:"
-  results.each { |filepath| puts "  #{command} \"#{filepath}\"" }
-  results.each do |filepath|
-    ret = `#{command} \"#{filepath}\"`
-    puts ret if ret && ret != ""
+end
+
+def print_header(action, desc, min=Ndex.sessions.min.subfolder_id, max=Ndex.sessions.max.subfolder_id)
+  puts ">>>>> #{action} #{Ndex.subfolder_prefix} #{min} through #{max} #{desc}".cyan.on_black
+end
+
+def width
+  @width = @width || `tput cols`.to_i
+end
+
+# Overwrite no command error to assume "name" is the default command and call
+# it with the correct argument. This maintains the existing CLI behavior from
+# before using Thor
+class Thor
+  module Base
+    module ClassMethods
+      def handle_no_command_error(command, has_namespace = $thor_runner) #:nodoc:
+        SrchCLI.start(ARGV.unshift("name"))
+      end
+    end
   end
 end
+
+class SrchCLI < Thor
+  desc "exec COMMAND PATTERN", "execute shell command on all logfiles whose name matches PATTERN"
+  def exec(command, pattern)
+    results = Srch.find_matching_logfiles(pattern)
+    cont = yes?("Do you want to run '#{command}' on #{results.size} logfiles? (y/n)")
+
+    if cont
+      puts "Executing commands:"
+      results.each do |logfile|
+        puts "  #{command} \"#{logfile.path}\"" 
+        ret = `#{command} \"#{logfile.path}\"`
+        puts ret if ret && ret != ""
+      end
+    end
+  end 
+
+  desc "fulltext PATTERN", "full text search for logfile lines matching PATTERN"
+  def fulltext(pattern)
+    print_header("Full-text searching", "for \"#{pattern}\"")
+
+    matches = Srch.text(pattern).each_pair do |logfile, lines| 
+      puts logfile.pp.ljust(width).black.on_white
+
+      odd_line = true
+      lines.each do |line|
+        print_str = "#{line}\n\n"
+
+        if odd_line
+          puts print_str
+        else
+          puts print_str.on_black
+        end
+
+        odd_line = !odd_line
+      end
+    end
+  end
+  map "text" => :fulltext
+  map "ftext" => :fulltext
+
+  desc "name PATTERN", "list logfiles whose name matches PATTERN"
+  def name(pattern)
+    print_header("Searching", "for filename \"#{pattern}\"")
+    Srch.print_matching_logfiles(pattern)
+  end
+  map "find" => :name
+end
+
+SrchCLI.start(ARGV)

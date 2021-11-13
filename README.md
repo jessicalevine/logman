@@ -13,8 +13,9 @@ Commands include:
 Used to browse logfiles
 
 Commands include:
-* list - list logfiles matching a particular pattern in their name
-* text - full text search on logfile lines
+* exec - execute shell command on all logfiles whose name matches PATTERN
+* fulltext - full text search for logfile lines matching PATTERN
+* name - list logfiles whose name matches PATTERN
 
 ## Configuration
 logman is meant to be platform independent and allow custom folder structures. These are managed via `.ndexconf.yml`.
