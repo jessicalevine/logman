@@ -3,18 +3,27 @@ require "bundler"
 Bundler.setup
 
 require_relative "ndex"
+require "pathname"
+require "thor"
 
 module Xtract
   class << self
     extend NdexPlugin
 
-    attr_accessor :zipfile
-    attr_accessor :source_dir
-    ndexable :default_zipfile
+    attr_reader :zipfile
+    attr_reader :source_dir
     ndexable :default_source_dir
 
+    def zipfile=(dir)
+      @zipfile = Pathname.new(dir).expand_path
+    end
+
+    def source_dir=(dir)
+      @source_dir = Pathname.new(dir).expand_path
+    end
+
     def new_subfolder_path
-      "#{Ndex.subfolder_prefix}#{Ndex.sessions.max.subfolder_id + 1}"
+      "#{Ndex.subfolder_prefix}#{Ndex.max_id + 1}"
     end
 
     def make_new_subfolder!
@@ -29,7 +38,7 @@ module Xtract
       path = make_new_subfolder!
       puts "Unzipping #{zipfile} into #{path}"
 
-      `unzip #{zipfile} -d #{path}`
+      `unzip "#{zipfile}" -d "#{path}"`
 
       puts "New directory contents:"
       Dir.glob("#{path}/*").each do |name|
@@ -47,44 +56,53 @@ module Xtract
         puts "  #{name}"
       end
     end
+
+    def candidate_matches(pattern)
+      Dir.glob("#{Xtract.source_dir}/#{pattern}")
+    end
   end
 end
 
+class XtractCLI < Thor
+  desc "zip PATH", "unzip a zipfile of logs into a new subfolder"
+  def zip(path)
+    Xtract.zipfile = path
 
-if ARGV[0]
-  cmd = ARGV[0]
-
-
-  if cmd == "zip"
-    Xtract.zipfile = ARGV[1]
+    puts "Subfolder that would be created: #{Xtract.new_subfolder_path}\n\n"
 
     if File.exists?(Xtract.zipfile)
-      puts 
-      Xtract.extract!
+      if yes?("Unzip '#{Xtract.zipfile}'? (y/n)")
+        Xtract.extract!
+      else
+        puts "Aborting."
+      end
     else
       puts "You entered \"#{Xtract.zipfile}\" as your zipfile for extraction"
       puts "This file does not exist, please provide a valid zipfile"
-      exit
     end
-  elsif cmd == "match"
-    pattern = ARGV[1]
-
-    Xtract.source_dir = ARGV[2] ? ARGV[2] : Xtract.default_source_dir
-
-    puts 
-    Xtract.move_matches!(pattern)
   end
-elsif Xtract.default_zipfile
-  Xtract.zipfile = Xtract.default_zipfile
 
-  if File.exists?(Xtract.zipfile)
-    Xtract.extract!
-  else
-    puts "You tried to use the default zipfile \"#{Xtract.zipfile}\""
-    puts "This file does not exist, please provide a valid zipfile"
-    exit
+  desc "match PATTERN [SOURCE_DIR]", "moves files matching PATTERN at SOURCE_DIR to new subfolder"
+  def match(pattern, path=nil)
+    Xtract.source_dir = path || Xtract.default_source_dir
+
+    puts "Subfolder that would be created: #{Xtract.new_subfolder_path}\n\n"
+
+    candidates = Xtract.candidate_matches(pattern)
+    if candidates.size == 0
+      error("No logfiles matching '#{Xtract.source_dir}/#{pattern}'! Aborting.")
+    else
+      puts "Files that would be moved:"
+      candidates.each { |filepath| puts "  #{filepath}" }
+      puts
+
+      if yes?("Move these files? (y/n)")
+        Xtract.move_matches!(pattern)
+      else
+        puts "Aborting"
+      end
+    end
   end
-else
-  puts "You did not enter a zipfile, and no default was found -- exiting"
-  exit
 end
+
+XtractCLI.start(ARGV)

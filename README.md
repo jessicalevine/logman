@@ -5,9 +5,10 @@ Includes two scripts:
 ## xtract
 Used for logfile movements, automatically placing them in new, consecutively numbered session folders
 
-Commands include:
-* zip - specifies a zipfile to unzip into a session
-* match - specifies a pattern to match files by
+Commands:
+  xtract help [COMMAND]              # Describe available commands or one specific command
+  xtract match PATTERN [SOURCE_DIR]  # moves files matching PATTERN at SOURCE_DIR to new subfolder
+  xtract zip PATH                    # unzip a zipfile of logs into a new subfolder
 
 ## srch
 Used to browse logfiles
