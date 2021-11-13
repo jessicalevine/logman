@@ -4,17 +4,14 @@ Bundler.setup
 
 require_relative "ndex"
 require "colorize"
+require "thor"
 
 module Srch
   class << self
     extend NdexPlugin
 
     def all(pattern)
-      find_logfiles(pattern)
-    end
-
-    def latest(pattern)
-      [find_logfiles(pattern).last]
+      print_matching_logfiles(pattern)
     end
     
     def text(pattern)
@@ -41,9 +38,9 @@ module Srch
       matches
     end
 
-    def find_logfiles(pattern)
-      Ndex.sessions.reduce([]) do |matches, session|
-        matches.concat(session.matching_logfiles(pattern))
+    def print_matching_logfiles(pattern)
+      Ndex.sessions.each do |session|
+        session.matching_logfiles(pattern).each { |lf| puts lf.pp }
       end
     end
   end
@@ -58,7 +55,7 @@ max = Ndex.sessions.max.subfolder_id
 
 if command == "list"
   puts ">>>>> Searching #{Ndex.subfolder_prefix} #{min} through #{max} for filename \"#{pattern}\"".cyan.on_black
-  puts Srch.send(selection, pattern).reduce("") { |s, l| "#{s}\n#{l.pp}" }
+  Srch.send(selection, pattern)
 elsif command == "text"
   puts ">>>>> Full-text searching #{Ndex.subfolder_prefix} #{min} through #{max} for \"#{pattern}\"".cyan.on_black
   width = `tput cols`.to_i

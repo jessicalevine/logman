@@ -14,7 +14,6 @@ Used to browse logfiles
 
 Commands include:
 * list - list logfiles matching a particular pattern in their name
-* last - find the last logfile matching a pattern
 * text - full text search on logfile lines
 
 ## Configuration
