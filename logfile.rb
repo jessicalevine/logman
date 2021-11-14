@@ -17,19 +17,38 @@ class Logfile
   end
 
   def find_lines(pattern)
-    html.css(Ndex.message_selector).reduce([]) do |matches, line|
-      content = line.content
-      matches_content = content.downcase.include?(pattern.downcase) 
-      if matches_content and not Ndex.search_exclusions.any? { |e| content.include?(e) }
-        matches << content
-      else
-        matches
+    matches = []
+    if extension == ".html" || extension == ".htm"
+      html.css(Ndex.message_selector).each do |line|
+        content = line.content
+        matches_content = content.downcase.include?(pattern.downcase) 
+        if matches_content and not Ndex.search_exclusions.any? { |e| content.include?(e) }
+          matches << content
+        end
       end
+    elsif extension == ".txt"
+      File.open(path, "r") do |file|
+        file.each_line do |line|
+          matches_line = line.downcase.include?(pattern.downcase) 
+          if matches_line and not Ndex.search_exclusions.any? { |e| line.include?(e) }
+            matches << line
+          end
+        end
+      end
+    else
+      puts "Unrecognized filetype for #{path}"
+      []
     end
+
+    matches
   end
 
   def filename
     File.basename(path, File.extname(path))
+  end
+
+  def extension
+    File.extname(path)
   end
 
   def pp

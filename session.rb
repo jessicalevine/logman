@@ -15,7 +15,7 @@ class Session
   end
 
   def logfiles
-    @logfiles = @logfiles || Dir.glob("#{path}/*").reduce([]) do |logs, path|
+    @logfiles = @logfiles || Dir.glob("#{path}/**/*").reduce([]) do |logs, path|
       # Only add files, not directories
       (Pathname.new(path).file?) ? logs.push(Logfile.new(path, self)) : logs
     end

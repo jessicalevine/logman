@@ -1,5 +1,5 @@
 # logman
-A CLI log manager for HTML chatlogs
+A CLI log manager for .html & .txt chatlogs
 
 Includes two scripts:
 ## xtract
