@@ -10,7 +10,7 @@ module Srch
   class << self
     extend NdexPlugin
     
-    def text(pattern, recent)
+    def text(pattern, recent, name=nil)
       recent = recent || Ndex.max_id
       matches = {}
 
@@ -25,10 +25,11 @@ module Srch
       Ndex.sessions.each do |session|
         if session.subfolder_id > Ndex.max_id - recent
           session.logfiles.each do |logfile|
-            if filter[logfile.path.downcase]
+
+            # If present in filter, name var exists, and if so name var in logfile name
+            if filter[logfile.path.downcase] && !(name && !logfile.match_name?(name))
               lines = logfile.find_lines(pattern)
               matches[logfile] = lines unless lines.empty?
-            else
             end
           end
         end
@@ -95,6 +96,7 @@ class SrchCLI < Thor
 
   desc "fulltext PATTERN", "full text search for logfile lines matching PATTERN"
   option :recent, :type => :numeric, :aliases => :r
+  option :name, :type => :string, :aliases => :n
   def fulltext(pattern)
     recent = options[:recent] || Ndex.max_id
     print_header(
@@ -103,7 +105,7 @@ class SrchCLI < Thor
       options[:recent] ? Ndex.max_id - recent : nil
     )
 
-    matches = Srch.text(pattern, recent).each_pair do |logfile, lines| 
+    matches = Srch.text(pattern, recent, options[:name]).each_pair do |logfile, lines| 
       puts logfile.pp.ljust(width).black.on_white
 
       odd_line = true

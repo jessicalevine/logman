@@ -23,7 +23,7 @@ class Session
 
   def matching_logfiles(pattern)
     logfiles.select do |logfile|
-      logfile.path.downcase.include?(pattern.downcase)
+      logfile.match_name?(pattern)
     end
   end
 

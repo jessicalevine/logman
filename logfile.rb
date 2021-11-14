@@ -51,6 +51,10 @@ class Logfile
     File.extname(path)
   end
 
+  def match_name?(pattern)
+    path.downcase.include?(pattern.downcase)
+  end
+
   def pp
     session_str = "(#{parent_session.subfolder_id})".ljust(5).cyan.on_black
     name = filename.ljust(24).capitalize.light_white.on_cyan
