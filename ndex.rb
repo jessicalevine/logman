@@ -26,6 +26,19 @@ module Ndex
       end
     end
 
+    def fulltext_regex_prefix
+      config["fulltext_regex_prefix"] || ""
+    end
+
+    # Check for the presence of pattern in text, prefixed by the default regex
+    # from the conflict file, which can be used to exclude specific sections of
+    # the line from the pattern match (for example - don't search the name at
+    # beginning of a chat line!)
+    def pattern_matches_regex?(text, pattern)
+      r = Regexp.new("#{Ndex.fulltext_regex_prefix}(.*#{pattern}.*)", Regexp::IGNORECASE)
+      r.match?(text)
+    end
+
     def rootfolder
       config["rootfolder"]
     end

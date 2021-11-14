@@ -21,17 +21,21 @@ class Logfile
     if extension == ".html" || extension == ".htm"
       html.css(Ndex.message_selector).each do |line|
         content = line.content
-        matches_content = content.downcase.include?(pattern.downcase) 
-        if matches_content and not Ndex.search_exclusions.any? { |e| content.include?(e) }
-          matches << content
+
+        if Ndex.pattern_matches_regex?(content, pattern)
+          unless Ndex.search_exclusions.any? { |e| content.include?(e) }
+            matches << content
+          end
         end
       end
     elsif extension == ".txt"
       File.open(path, "r") do |file|
         file.each_line do |line|
-          matches_line = line.downcase.include?(pattern.downcase) 
-          if matches_line and not Ndex.search_exclusions.any? { |e| line.include?(e) }
-            matches << line
+
+          if Ndex.pattern_matches_regex?(line, pattern)
+            unless Ndex.search_exclusions.any? { |e| line.include?(e) }
+              matches << line
+            end
           end
         end
       end
